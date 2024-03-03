@@ -9,7 +9,7 @@ steps to reproduce the situation
 - then we call `ReleaseSRWLockExclusive` from the main thread
 
 
-and with the help of VEX we catch the moment when R`eleaseSRWLockExclusive` set the [K bit](https://github.com/mic101/windows/blob/master/WRK-v1.2/base/ntos/ex/pushlock.c#L31) in SRW
+and with the help of VEX we catch the moment when `ReleaseSRWLockExclusive` set the [K bit](https://github.com/mic101/windows/blob/master/WRK-v1.2/base/ntos/ex/pushlock.c#L31) in SRW
 here we suspend the main thread and resume the last worker. and give it time (again `Sleep(1000)`) to enter to the lock. and it enter in - `AcquireSRWLockShared` works successfully - since the **L**ock bit has already been removed
 then, we continue executing the main thread in `ReleaseSRWLockExclusive`
 
