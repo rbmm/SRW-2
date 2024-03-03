@@ -123,7 +123,7 @@ struct ThreadTestData
 		return 0;
 	}
 
-	void TestInternal(ULONG n = 2)
+	void TestInternal(ULONG n = 4)
 	{
 		MY_VEX_FRAME vf(SRWLockAlt);
 		SetBpOnAddress(SRWLock);
