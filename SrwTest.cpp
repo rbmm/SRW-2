@@ -43,7 +43,7 @@ BOOL SetBpOnAddress(PVOID pv)
 	CONTEXT ctx {};
 	ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
 	ctx.Dr3 = (ULONG_PTR)pv;
-	ctx.Dr7 = 0xF0000040;
+	ctx.Dr7 = 0xD0000040;
 	return SetThreadContext(NtCurrentThread(), &ctx);
 }
 
@@ -94,8 +94,7 @@ int Message( _In_opt_ PCWSTR lpText, _In_ UINT uType)
 struct ThreadTestData 
 {
 	HANDLE hEvent;
-	PSRWLOCK SRWLock = 0;
-	PSRWLOCK SRWLockAlt = 0;
+	SRWLOCK SRWLock {};
 	LONG numThreads = 1;
 
 	void EndThread()
@@ -108,11 +107,11 @@ struct ThreadTestData
 
 	void DoStuff()
 	{
-		AcquireSRWLockShared(SRWLock);
+		AcquireSRWLockShared(&SRWLock);
 
 		Message(__FUNCTIONW__, MB_ICONINFORMATION);
 
-		ReleaseSRWLockShared(SRWLock);
+		ReleaseSRWLockShared(&SRWLock);
 
 		EndThread();
 	}
@@ -125,10 +124,10 @@ struct ThreadTestData
 
 	void TestInternal(ULONG n = 4)
 	{
-		MY_VEX_FRAME vf(SRWLockAlt);
-		SetBpOnAddress(SRWLock);
+		MY_VEX_FRAME vf(&SRWLock);
+		SetBpOnAddress(&SRWLock);
 
-		AcquireSRWLockExclusive(SRWLock);
+		AcquireSRWLockExclusive(&SRWLock);
 
 		do 
 		{
@@ -156,7 +155,7 @@ struct ThreadTestData
 		Sleep(1000);
 		//Message(__FUNCTIONW__, MB_ICONWARNING);
 
-		ReleaseSRWLockExclusive(SRWLock);
+		ReleaseSRWLockExclusive(&SRWLock);
 
 		EndThread();
 
@@ -172,27 +171,7 @@ struct ThreadTestData
 	{
 		if (hEvent = CreateEventW(0, 0, 0, 0))
 		{
-			if (HANDLE hSection = CreateFileMappingW(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, sizeof(SRWLOCK), 0))
-			{
-				if (SRWLock = (PSRWLOCK)MapViewOfFile(hSection, FILE_MAP_WRITE, 0, 0, 0))
-				{
-					SRWLockAlt = (PSRWLOCK)MapViewOfFile(hSection, FILE_MAP_WRITE, 0, 0, 0);
-				}
-
-				CloseHandle(hSection);
-
-				if (SRWLock)
-				{
-					if (SRWLockAlt)
-					{
-						TestInternal();
-
-						UnmapViewOfFile(SRWLockAlt);
-					}
-				}
-
-				UnmapViewOfFile(SRWLock);
-			}
+			TestInternal();
 
 			CloseHandle(hEvent);
 		}
